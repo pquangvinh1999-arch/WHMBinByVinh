@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>DINOv2 Indexer v4.1 - Fast Load</title>
+    <script type="module">
+        import { AutoModel, AutoImageProcessor, RawImage, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+
+        // Cấu hình lưu trữ vào cache trình duyệt
+        env.allowLocalModels = false;
+        env.useBrowserCache = true; 
+
+        let model, processor;
+
+        async function init() {
+            const status = document.getElementById('status');
+            const modelBar = document.getElementById('modelProgressBar');
+            const modelProgressBox = document.getElementById('model-progress-box');
+
+            status.innerText = "🚀 Đang kết nối server AI...";
+            
+            try {
+                // Theo dõi tiến trình tải bộ não AI
+                const progress_callback = (progress) => {
+                    if (progress.status === 'progress') {
+                        modelProgressBox.style.display = 'block';
+                        modelBar.value = progress.loaded;
+                        modelBar.max = progress.total;
+                        const percent = Math.round((progress.loaded / progress.total) * 100);
+                        status.innerText = `⏳ Đang tải bộ não AI: ${percent}% (${(progress.loaded / 1024 / 1024).toFixed(1)}MB)`;
+                    }
+                    if (progress.status === 'ready') {
+                        status.innerText = "✨ Đang giải nén mô hình...";
+                    }
+                };
+
+                processor = await AutoImageProcessor.from_pretrained('Xenova/dinov2-small', { progress_callback });
+                model = await AutoModel.from_pretrained('Xenova/dinov2-small', { 
+                    quantized: true, 
+                    progress_callback 
+                });
+
+                status.innerText = "✅ AI ĐÃ SẴN SÀNG! (Dữ liệu đã được lưu vào máy anh)";
+                modelProgressBox.style.display = 'none';
+                document.getElementById('fileInput').disabled = false;
+                document.getElementById('selectBtn').style.opacity = "1";
+
+            } catch (e) {
+                status.innerText = "❌ Lỗi mạng: Không thể tải AI. Anh kiểm tra lại wifi nhé!";
+                console.error(e);
+            }
+        }
+
+        window.processImages = async (files) => {
+            const status = document.getElementById('status');
+            const bar = document.getElementById('progressBar');
+            const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+            
+            if(imageFiles.length === 0) return alert("Thư mục không có ảnh!");
+
+            let csvContent = "id,malieu,vector\n";
+            bar.max = imageFiles.length;
+            document.getElementById('process-box').style.display = 'block';
+
+            for (let i = 0; i < imageFiles.length; i++) {
+                const file = imageFiles[i];
+                const url = URL.createObjectURL(file);
+                try {
+                    const image = await RawImage.fromURL(url);
+                    const inputs = await processor(image);
+                    const { last_hidden_state } = await model(inputs);
+                    const vector = last_hidden_state.mean(1).data;
+
+                    const partCode = file.name.replace(/\.[^/.]+$/, "");
+                    csvContent += `${i+1},${partCode},"${Array.from(vector).join('|')}"\n`;
+
+                    bar.value = i + 1;
+                    status.innerText = `🔄 Đang bóc tách: ${i + 1}/${imageFiles.length} (${partCode})`;
+                } catch (err) { console.error(err); }
+                URL.revokeObjectURL(url);
+            }
+            downloadCSV(csvContent);
+            status.innerText = "🎉 HOÀN THÀNH! FILE ĐÃ TẢI XUỐNG.";
+        };
+
+        function downloadCSV(content) {
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "database_ai_vinh.csv";
+            link.click();
+        }
+
+        init();
+    </script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #050b18; color: white; text-align: center; padding: 50px; }
+        .box { border: 2px dashed #00f2ff; padding: 40px; border-radius: 20px; max-width: 600px; margin: auto; background: rgba(0,242,255,0.02); }
+        #status { color: #00f2ff; margin-bottom: 20px; font-weight: bold; min-height: 24px; }
+        .btn { background: #00f2ff; color: #000; padding: 15px 35px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.3s; opacity: 0.5; }
+        .btn:hover { background: #fff; transform: scale(1.05); }
+        progress { width: 100%; height: 12px; margin-top: 10px; border-radius: 10px; accent-color: #00f2ff; }
+        .label { font-size: 12px; color: #64748b; margin-bottom: 5px; display: block; }
+    </style>
+</head>
+<body>
+    <h1 style="font-size: 2.5em; margin-bottom: 10px;">DINOv2 INDEXER <span style="color:#7000ff">v4.1</span></h1>
+    <p style="color: #64748b; margin-bottom: 30px;">Hệ thống số hóa dấu vân tay AI - Thiết kế cho anh Vinh</p>
+    
+    <div class="box">
+        <div id="status">Khởi tạo...</div>
+        
+        <!-- Thanh tiến trình tải Model -->
+        <div id="model-progress-box" style="display:none; margin-bottom: 20px;">
+            <span class="label">TIẾN TRÌNH TẢI BỘ NÃO AI</span>
+            <progress id="modelProgressBar" value="0"></progress>
+        </div>
+
+        <input type="file" id="fileInput" webkitdirectory directory multiple disabled hidden onchange="processImages(this.files)">
+        <button class="btn" id="selectBtn" onclick="document.getElementById('fileInput').click()">CHỌN THƯ MỤC ẢNH LINH KIỆN</button>
+        
+        <!-- Thanh tiến trình xử lý ảnh -->
+        <div id="process-box" style="display:none; margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+            <span class="label">TIẾN TRÌNH TRÍCH XUẤT VECTOR</span>
+            <progress id="progressBar" value="0"></progress>
+        </div>
+    </div>
+</body>
+</html>
