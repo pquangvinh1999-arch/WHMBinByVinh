@@ -3,34 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WHMProAiByVinh - Warehouse Management</title>
+    <title>WHMProAiByVinh - Warehouse Management System</title>
+    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fcfcfd; }
-        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); }
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); }
+        
+        /* Gradient Button & Animation */
         .gradient-btn {
             background: linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .gradient-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.5);
             filter: brightness(1.1);
         }
+        .gradient-btn:active { transform: translateY(0); }
+
+        /* Table Animations */
         .table-row-anim { transition: all 0.2s ease; }
-        .table-row-anim:hover { background-color: #f8fafc; transform: scale(1.002); }
+        .table-row-anim:hover { 
+            background-color: #f8fafc; 
+            transform: scale(1.001); 
+            box-shadow: inset 4px 0 0 #3b82f6;
+        }
+
+        /* Loading Spinner */
         .loader { border-top-color: #3b82f6; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Modal Animations */
         .modal-enter { animation: modalFadeIn 0.3s ease-out; }
         @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="text-slate-900 overflow-x-hidden">
 
-    <!-- LOGIN OVERLAY -->
+    <!-- 1. LOGIN OVERLAY -->
     <div id="loginOverlay" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/80 backdrop-blur-md transition-all duration-500">
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md modal-enter border border-slate-100">
             <div class="text-center mb-8">
@@ -43,7 +64,7 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Email / Tài khoản</label>
-                    <input type="text" id="loginUser" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all" placeholder="user@whmpro.com">
+                    <input type="email" id="loginUser" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all" placeholder="name@company.com">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Mật khẩu</label>
@@ -56,9 +77,9 @@
         </div>
     </div>
 
-    <!-- MAIN APP -->
+    <!-- 2. MAIN APPLICATION -->
     <div id="mainApp" class="hidden min-h-screen flex flex-col">
-        <!-- Header -->
+        <!-- Professional Header -->
         <header class="glass sticky top-0 z-40 px-6 py-4 flex justify-between items-center border-b border-slate-100">
             <div class="flex items-center gap-3">
                 <div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-2 rounded-lg shadow-lg shadow-blue-200">
@@ -71,14 +92,21 @@
                     <p id="userDisplay" class="text-sm font-semibold text-slate-800">Loading User...</p>
                     <p id="timeDisplay" class="text-xs text-slate-500 font-medium"></p>
                 </div>
-                <div class="h-10 w-10 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden">
-                    <img src="https://ui-avatars.com/api/?name=Admin+Vinh&background=0D8ABC&color=fff" alt="User">
+                <div class="relative group cursor-pointer" onclick="handleLogout()">
+                    <div class="h-10 w-10 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden">
+                        <img src="https://ui-avatars.com/api/?name=Admin+Vinh&background=0D8ABC&color=fff" alt="User">
+                    </div>
+                    <div class="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 hidden group-hover:block p-2 animate-fade-in">
+                        <button class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2">
+                            <i data-lucide="log-out" class="w-4 h-4"></i> Đăng xuất
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
 
         <main class="p-6 max-w-[1600px] mx-auto w-full space-y-6">
-            <!-- Action Bar -->
+            <!-- Top Action Bar -->
             <div class="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
                 <div class="flex gap-3">
                     <button onclick="openModal('modalIn')" class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-medium gradient-btn">
@@ -89,15 +117,15 @@
                     </button>
                 </div>
 
-                <!-- Smart Filter -->
+                <!-- Smart Filter Section -->
                 <div class="flex flex-wrap gap-2 bg-white p-2 rounded-2xl shadow-sm border border-slate-100 w-full lg:w-auto">
-                    <div class="relative flex-1 min-w-[200px]">
+                    <div class="relative flex-1 min-w-[250px]">
                         <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                        <input type="text" id="globalSearch" onkeyup="filterData()" placeholder="Tìm kiếm hàng loạt (Item, Cont, Bin...)" 
+                        <input type="text" id="globalSearch" onkeyup="filterData()" placeholder="Tìm kiếm nhanh (Item, Cont, Bin...)" 
                                class="pl-10 pr-4 py-2 rounded-xl border-none bg-slate-50 focus:ring-2 focus:ring-blue-500 w-full text-sm outline-none transition-all">
                     </div>
-                    <select id="filterColumn" class="px-3 py-2 rounded-xl bg-slate-50 border-none text-xs font-medium text-slate-600 outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="all">Tất cả trường</option>
+                    <select id="filterColumn" class="px-3 py-2 rounded-xl bg-slate-50 border-none text-xs font-medium text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                        <option value="all">Tất cả các trường</option>
                         <option value="Item_Code">Item Code</option>
                         <option value="Cont">Container</option>
                         <option value="Bin">Bin</option>
@@ -108,14 +136,14 @@
                 </div>
             </div>
 
-            <!-- Data Table -->
+            <!-- Professional Data Table -->
             <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-50/50 border-b border-slate-100 text-slate-500 text-xs uppercase tracking-wider font-semibold">
                                 <th class="px-6 py-4 w-10 text-center"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
-                                <th class="px-6 py-4">Ảnh</th>
+                                <th class="px-6 py-4">Hình ảnh</th>
                                 <th class="px-6 py-4">Item Code</th>
                                 <th class="px-6 py-4">Container</th>
                                 <th class="px-6 py-4">Bin</th>
@@ -127,32 +155,32 @@
                             </tr>
                         </thead>
                         <tbody id="dataTableBody" class="divide-y divide-slate-50 text-sm">
-                            <!-- Data injected by JS -->
+                            <!-- Dynamic Content -->
                         </tbody>
                     </table>
                 </div>
-                <!-- Loading State -->
-                <div id="loading" class="flex flex-col items-center justify-center py-20">
+                <!-- Global Loading -->
+                <div id="loading" class="hidden flex flex-col items-center justify-center py-20">
                     <div class="loader ease-linear rounded-full border-4 border-t-4 border-slate-200 h-12 w-12 mb-4"></div>
-                    <p class="text-slate-500 animate-pulse">Đang tải dữ liệu hệ thống...</p>
+                    <p class="text-slate-500 animate-pulse">Đang truy xuất dữ liệu từ Supabase...</p>
                 </div>
             </div>
         </main>
     </div>
 
     <!-- MODALS -->
-    <!-- Image Modal -->
+    <!-- Advanced Image Viewer -->
     <div id="imageModal" class="fixed inset-0 z-[110] hidden flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
         <div class="relative max-w-4xl w-full flex flex-col items-center">
             <button onclick="closeImage()" class="absolute -top-12 right-0 text-white hover:text-red-400 transition-colors">
                 <i data-lucide="x-circle" class="w-10 h-10"></i>
             </button>
             <img id="fullImage" src="" class="max-h-[85vh] max-w-full rounded-2xl shadow-2xl transition-transform duration-300 cursor-zoom-in" onclick="toggleZoom(this)">
-            <div class="mt-4 text-white text-sm opacity-70">Nhấp vào ảnh để phóng to / thu nhỏ</div>
+            <div class="mt-4 text-white text-sm opacity-70 font-medium">Nhấn vào ảnh để phóng to / thu nhỏ</div>
         </div>
     </div>
 
-    <!-- Generic Modal -->
+    <!-- Form Modal -->
     <div id="genericModal" class="fixed inset-0 z-[110] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
         <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl modal-enter p-6 border border-slate-100">
             <div class="flex justify-between items-center mb-6">
@@ -160,7 +188,7 @@
                 <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
             </div>
             <div id="modalContent" class="space-y-4">
-                <!-- Form content here -->
+                <!-- Dynamic Form Content -->
             </div>
             <div class="mt-8 flex justify-end gap-3">
                 <button onclick="closeModal()" class="px-4 py-2 rounded-xl text-slate-600 font-medium hover:bg-slate-100 transition-all">Hủy</button>
@@ -170,19 +198,25 @@
     </div>
 
     <script>
-        // --- CONFIGURATION ---
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-        const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        // --- 1. CONFIGURATION ---
+        const SUPABASE_URL = 'https://xsgvhxsfsaelaqnjrsvv.supabase.co/rest/v1/'; // Thay bằng URL của anh
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzZ3ZoeHNmc2FlbGFxbmpyc3Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxMTgxOTEsImV4cCI6MjA5MzY5NDE5MX0.7-qk28hMkm8VeOsaWClbW-FHefcQA2kFWuksFPSLDog'; // Thay bằng Anon Key của anh
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let allData = [];
         let filteredData = [];
 
-        // --- INITIALIZATION ---
-        window.onload = () => {
+        // --- 2. INITIALIZATION ---
+        window.onload = async () => {
             lucide.createIcons();
             updateTime();
             setInterval(updateTime, 1000);
+
+            // Check for existing session
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                showApp(session.user);
+            }
         };
 
         function updateTime() {
@@ -190,22 +224,35 @@
             document.getElementById('timeDisplay').innerText = now.toLocaleString('vi-VN');
         }
 
-        // --- AUTHENTICATION ---
+        // --- 3. AUTHENTICATION ---
         async function handleLogin() {
-            const user = document.getElementById('loginUser').value;
-            const pass = document.getElementById('loginPass').value;
+            const email = document.getElementById('loginUser').value;
+            const password = document.getElementById('loginPass').value;
 
-            if (!user || !pass) return alert('Vui lòng nhập đủ thông tin!');
+            if (!email || !password) return alert('Vui lòng nhập đầy đủ email và mật khẩu!');
 
-            // Giả lập Login (Anh có thể thay bằng supabase.auth.signInWithPassword)
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                showApp(data.user);
+            } catch (err) {
+                alert('Sai tài khoản hoặc mật khẩu! Vui lòng kiểm tra lại.');
+            }
+        }
+
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            location.reload();
+        }
+
+        function showApp(user) {
             document.getElementById('loginOverlay').classList.add('opacity-0', 'pointer-events-none');
             document.getElementById('mainApp').classList.remove('hidden');
-            document.getElementById('userDisplay').innerText = `Xin chào, ${user}`;
-            
+            document.getElementById('userDisplay').innerText = `Xin chào, ${user.email}`;
             loadData();
         }
 
-        // --- DATA HANDLING ---
+        // --- 4. DATA HANDLING ---
         async function loadData() {
             document.getElementById('loading').classList.remove('hidden');
             try {
@@ -272,7 +319,7 @@
             lucide.createIcons();
         }
 
-        // --- SMART FILTER ---
+        // --- 5. SMART FILTER LOGIC ---
         function filterData() {
             const query = document.getElementById('globalSearch').value.toLowerCase();
             const col = document.getElementById('filterColumn').value;
@@ -287,7 +334,7 @@
             renderTable(filteredData);
         }
 
-        // --- UI ACTIONS ---
+        // --- 6. UI & MODAL ACTIONS ---
         function openModal(type) {
             const modal = document.getElementById('genericModal');
             const title = document.getElementById('modalTitle');
@@ -314,9 +361,15 @@
                     </div>
                 `;
             } else {
-                title.innerText = 'Xuất Kho Nguyên Vật Liệu';
-                content.innerHTML = `<p class="text-slate-500">Vui lòng quét mã TAG_ID để thực hiện xuất hàng nhanh.</p>
-                                    <input type="text" placeholder="Quét TAG_ID tại đây..." class="w-full p-4 rounded-xl border-2 border-blue-500 focus:ring-4 ring-blue-100 outline-none font-mono text-center text-lg">`;
+                title.innerText = 'Xuất Kho Nhanh (PDA Mode)';
+                content.innerHTML = `
+                    <div class="text-center space-y-4">
+                        <p class="text-slate-500">Hãy sử dụng máy quét mã vạch hoặc nhập TAG_ID</p>
+                        <input type="text" placeholder="Quét TAG_ID tại đây..." 
+                               class="w-full p-4 rounded-xl border-2 border-blue-500 focus:ring-4 ring-blue-100 outline-none font-mono text-center text-xl uppercase"
+                               autofocus>
+                    </div>
+                `;
             }
         }
 
@@ -344,7 +397,7 @@
         }
 
         function editRow(index) {
-            alert('Đang mở form chỉnh sửa cho Item: ' + filteredData[index].Item_Code);
+            alert('Tính năng chỉnh sửa đang được liên kết với Supabase API cho Item: ' + filteredData[index].Item_Code);
         }
 
         function markRow(index) {
