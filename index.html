@@ -4,25 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WHMProAiByVinh | Professional Warehouse</title>
-    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
     <style>
-        :root { --primary: #3b82f6; --primary-dark: #1d4ed8; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; font-size: 13px; }
         .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); }
-        .gradient-btn {
-            background: linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        .gradient-btn { background: linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .gradient-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 15px -3px rgba(59, 130, 246, 0.4); }
         .table-row-anim { transition: all 0.2s ease; }
-        .table-row-anim:hover { background-color: #f1f5f9; box-shadow: inset 3px 0 0 var(--primary); }
-        .loader { border-top-color: var(--primary); animation: spin 1s linear infinite; }
+        .table-row-anim:hover { background-color: #f1f5f9; box-shadow: inset 3px 0 0 #3b82f6; }
+        .loader { border-top-color: #3b82f6; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .modal-enter { animation: modalFadeIn 0.2s ease-out; }
         @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
@@ -77,21 +71,20 @@
         </header>
 
         <main class="p-4 max-w-[1600px] mx-auto w-full space-y-4">
-            <!-- Toolbar -->
-            <div class="flex flex-col md:flex-row gap-3 justify-between items-center">
-                <div class="flex gap-2 w-full md:w-auto">
+            <div class="flex flex-col lg:flex-row gap-3 justify-between items-center">
+                <div class="flex gap-2 w-full lg:w-auto">
                     <button onclick="openModal('modalIn')" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-white font-medium gradient-btn text-xs">
-                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Nhập kho
+                        <i data-lucide="download-cloud" class="w-4 h-4"></i> Nhập kho
                     </button>
                     <button onclick="openModal('modalOut')" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-white font-medium bg-slate-800 hover:bg-slate-900 transition-all text-xs">
-                        <i data-lucide="minus-circle" class="w-4 h-4"></i> Xuất kho
+                        <i data-lucide="upload-cloud" class="w-4 h-4"></i> Xuất kho
                     </button>
                     <button onclick="openModal('modalLogs')" class="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-600 font-medium bg-white border border-slate-200 hover:bg-slate-50 transition-all text-xs">
                         <i data-lucide="history" class="w-4 h-4"></i> Lịch sử
                     </button>
                 </div>
 
-                <div class="flex flex-wrap gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-slate-100 w-full md:w-auto">
+                <div class="flex flex-wrap gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-slate-100 w-full lg:w-auto">
                     <div class="relative flex-1 min-w-[200px]">
                         <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"></i>
                         <input type="text" id="globalSearch" onkeyup="filterData()" placeholder="Tìm Item, Cont, Bin..." 
@@ -110,7 +103,6 @@
                 </div>
             </div>
 
-            <!-- Data Table -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -155,9 +147,12 @@
                 <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div id="modalContent" class="space-y-4"></div>
-            <div class="mt-8 flex justify-end gap-3">
+            <!-- FIXED FOOTER WITH CONFIRM BUTTON -->
+            <div class="mt-8 flex justify-end gap-3 border-t pt-4 border-slate-100">
                 <button onclick="closeModal()" class="px-4 py-2 rounded-xl text-slate-600 font-medium hover:bg-slate-100 transition-all text-xs">Hủy</button>
-                <button id="modalSubmit" class="px-6 py-2 rounded-xl text-white font-medium gradient-btn text-xs">Xác nhận</button>
+                <button id="modalSubmit" class="px-6 py-2 rounded-xl text-white font-medium gradient-btn text-xs flex items-center gap-2">
+                    <span id="submitText">Xác nhận</span>
+                </button>
             </div>
         </div>
     </div>
@@ -165,7 +160,7 @@
     <script>
         // --- 1. CONFIGURATION ---
         const SUPABASE_URL = 'https://xsgvhxsfsaelaqnjrsvv.supabase.co'; 
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzZ3ZoeHNmc2FlbGFxbmpyc3Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxMTgxOTEsImV4cCI6MjA5MzY5NDE5MX0.7-qk28hMkm8VeOsaWClbW-FHefcQA2kFWuksFPSLDog'; // Sử dụng Key của anh
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzZ3ZoeHNmc2FlbGFxbmpyc3Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxMTgxOTEsImV4cCI6MjA5MzY5NDE5MX0.7-qk28hMkm8VeOsaWClbW-FHefcQA2kFWuksFPSLDog'; 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let allData = [];
@@ -173,7 +168,6 @@
         let currentUser = null;
         let html5QrScanner = null;
 
-        // --- 2. INITIALIZATION ---
         window.onload = async () => {
             lucide.createIcons();
             updateTime();
@@ -181,27 +175,17 @@
             window.addEventListener('online', updateOnlineStatus);
             window.addEventListener('offline', updateOnlineStatus);
             updateOnlineStatus();
-
             try {
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 if (session) showApp(session.user);
             } catch (e) { console.error("Auth check failed", e); }
         };
 
-        function updateTime() {
-            document.getElementById('timeDisplay').innerText = new Date().toLocaleString('vi-VN');
-        }
-
+        function updateTime() { document.getElementById('timeDisplay').innerText = new Date().toLocaleString('vi-VN'); }
         function updateOnlineStatus() {
-            const badge = document.getElementById('offlineBadge');
-            if (navigator.onLine) {
-                badge.classList.add('hidden');
-            } else {
-                badge.classList.remove('hidden');
-            }
+            document.getElementById('offlineBadge').classList.toggle('hidden', navigator.onLine);
         }
 
-        // --- 3. AUTHENTICATION ---
         async function handleLogin() {
             const email = document.getElementById('loginUser').value;
             const password = document.getElementById('loginPass').value;
@@ -213,10 +197,7 @@
             } catch (err) { alert('Sai tài khoản hoặc mật khẩu!'); }
         }
 
-        async function handleLogout() {
-            await supabaseClient.auth.signOut();
-            location.reload();
-        }
+        async function handleLogout() { await supabaseClient.auth.signOut(); location.reload(); }
 
         function showApp(user) {
             currentUser = user;
@@ -226,34 +207,20 @@
             loadData();
         }
 
-        // --- 4. DATA HANDLING & OFFLINE MODE ---
         async function loadData() {
             document.getElementById('loading').classList.remove('hidden');
             try {
-                const { data, error } = await supabaseClient
-                    .from('TembacBin')
-                    .select('*')
-                    .order('Item_Code', { ascending: true });
-
+                const { data, error } = await supabaseClient.from('TembacBin').select('*').order('Item_Code', { ascending: true });
                 if (error) throw error;
                 allData = data;
-                // Lưu vào LocalStorage cho chế độ Offline
                 localStorage.setItem('whm_cache', JSON.stringify(allData));
                 filteredData = [...allData];
                 renderTable(filteredData);
             } catch (err) {
-                console.log('Loading failed, checking cache...');
                 const cached = localStorage.getItem('whm_cache');
-                if (cached) {
-                    allData = JSON.parse(cached);
-                    filteredData = [...allData];
-                    renderTable(filteredData);
-                } else {
-                    alert('Lỗi tải dữ liệu và không có bản lưu offline!');
-                }
-            } finally {
-                document.getElementById('loading').classList.add('hidden');
-            }
+                if (cached) { allData = JSON.parse(cached); filteredData = [...allData]; renderTable(filteredData); }
+                else { alert('Lỗi tải dữ liệu!'); }
+            } finally { document.getElementById('loading').classList.add('hidden'); }
         }
 
         function renderTable(data) {
@@ -282,9 +249,9 @@
                     <td class="px-4 py-3"><code class="bg-slate-100 px-1.5 py-0.5 rounded text-[10px] font-medium text-slate-500">${row.TAG_ID || 'N/A'}</code></td>
                     <td class="px-4 py-3">
                         <div class="flex justify-center gap-1">
-                            <button onclick="quickExport('${row.TAG_ID}', '${row.Item_Code}')" class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors" title="Xuất nhanh"><i data-lucide="zap" class="w-3.5 h-3.5"></i></button>
-                            <button onclick="editRow(${index})" class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors" title="Sửa"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
-                            <button onclick="markRow(${index})" class="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors" title="Đánh dấu"><i data-lucide="bookmark" class="w-3.5 h-3.5"></i></button>
+                            <button onclick="quickExport('${row.TAG_ID}', '${row.Item_Code}')" class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"><i data-lucide="zap" class="w-3.5 h-3.5"></i></button>
+                            <button onclick="editRow(${index})" class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+                            <button onclick="markRow(${index})" class="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors"><i data-lucide="bookmark" class="w-3.5 h-3.5"></i></button>
                         </div>
                     </td>
                 `;
@@ -303,13 +270,16 @@
             renderTable(filteredData);
         }
 
-        // --- 5. CORE LOGIC: IMPORT / EXPORT ---
+        // --- MODAL & CORE LOGIC ---
         async function openModal(type) {
             const modal = document.getElementById('genericModal');
             const title = document.getElementById('modalTitle');
             const content = document.getElementById('modalContent');
-            modal.classList.remove('hidden');
+            const submitBtn = document.getElementById('modalSubmit');
             
+            modal.classList.remove('hidden');
+            submitBtn.classList.remove('hidden'); // Luôn hiện nút xác nhận
+
             if (type === 'modalIn') {
                 title.innerText = 'Nhập Kho Nguyên Vật Liệu';
                 content.innerHTML = `
@@ -318,7 +288,7 @@
                             <div class="flex-1">
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tag ID</label>
                                 <div class="flex gap-2">
-                                    <input type="text" id="in_tag" class="w-full p-2.5 rounded-xl border border-slate-200 outline-none text-xs">
+                                    <input type="text" id="in_tag" class="w-full p-2.5 rounded-xl border border-slate-200 outline-none text-xs" placeholder="Quét mã Tag...">
                                     <button onclick="startScan('in_tag')" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all"><i data-lucide="camera" class="w-4 h-4"></i></button>
                                 </div>
                             </div>
@@ -345,7 +315,7 @@
                         </div>
                     </div>
                 `;
-                document.getElementById('modalSubmit').onclick = handleImport;
+                submitBtn.onclick = handleImport;
             } else if (type === 'modalOut') {
                 title.innerText = 'Xuất Kho Nhanh';
                 content.innerHTML = `
@@ -355,47 +325,38 @@
                                    class="flex-1 p-3 rounded-xl border-2 border-blue-500 outline-none font-mono text-center text-lg uppercase">
                             <button onclick="startScan('out_tag')" class="p-3 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all"><i data-lucide="camera" class="w-6 h-6"></i></button>
                         </div>
-                        <div id="tagResult" class="hidden p-4 rounded-2xl bg-blue-50 border border-blue-100 space-y-3 animate-pulse">
+                        <div id="tagResult" class="hidden p-4 rounded-2xl bg-blue-50 border border-blue-100 space-y-3">
                             <div class="flex justify-between text-sm"><span class="text-slate-500">Số lượng tồn:</span> <span id="res_qty" class="font-bold text-blue-700">0</span></div>
                             <div class="flex justify-between text-sm"><span class="text-slate-500">Mã vật liệu:</span> <span id="res_item" class="font-bold text-slate-800">---</span></div>
                             <div class="pt-3 border-t border-blue-200">
-                                <label class="block text-xs font-bold text-blue-600 uppercase mb-2">Chọn phương thức xuất</label>
+                                <label class="block text-xs font-bold text-blue-600 uppercase mb-2">Phương thức xuất</label>
                                 <div class="flex gap-2">
                                     <button onclick="setExportMode('all')" id="btnAll" class="flex-1 py-2 rounded-lg bg-white border border-blue-300 text-xs font-medium hover:bg-blue-100">Xuất hết</button>
                                     <button onclick="setExportMode('part')" id="btnPart" class="flex-1 py-2 rounded-lg bg-white border border-blue-300 text-xs font-medium hover:bg-blue-100">Xuất một phần</button>
                                 </div>
-                                <input type="number" id="out_qty_part" class="hidden w-full mt-3 p-2 rounded-lg border border-blue-300 text-center outline-none" placeholder="Nhập số lượng xuất...">
+                                <input type="number" id="out_qty_part" class="hidden w-full mt-3 p-2 rounded-lg border border-blue-300 text-center outline-none text-xs" placeholder="Nhập số lượng xuất...">
                             </div>
                         </div>
                     </div>
                 `;
-                document.getElementById('modalSubmit').onclick = handleExport;
+                submitBtn.onclick = handleExport;
             } else if (type === 'modalLogs') {
                 title.innerText = 'Nhật Ký Thao Tác';
                 content.innerHTML = `<div class="max-h-[60vh] overflow-y-auto space-y-2" id="logList"><p class="text-center text-slate-400 italic">Đang tải log...</p></div>`;
-                document.getElementById('modalSubmit').classList.add('hidden');
+                submitBtn.classList.add('hidden');
                 loadLogs();
             }
             modal.classList.remove('hidden');
             lucide.createIcons();
         }
 
-        // --- BARCODE SCANNING (Camera) ---
+        // --- BARCODE SCANNING ---
         async function startScan(targetId) {
-            const modal = document.getElementById('genericModal');
             const content = document.getElementById('modalContent');
             const originalContent = content.innerHTML;
-
-            content.innerHTML = `
-                <div class="relative">
-                    <div id="reader" class="w-full overflow-hidden rounded-2xl"></div>
-                    <button onclick="stopScan('${targetId}', \`${originalContent.replace(/"/g, '&quot;')}\`)" class="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full shadow-lg">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            `;
+            content.innerHTML = `<div class="relative"><div id="reader" class="w-full overflow-hidden rounded-2xl"></div>
+                <button onclick="stopScan('${targetId}', \`${originalContent.replace(/"/g, '&quot;')}\`)" class="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full shadow-lg"><i data-lucide="x" class="w-4 h-4"></i></button></div>`;
             lucide.createIcons();
-
             html5QrScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 150} });
             html5QrScanner.render((text) => {
                 document.getElementById(targetId).value = text;
@@ -403,20 +364,13 @@
                 stopScan(targetId, originalContent);
             }, (err) => {});
         }
-
         function stopScan(targetId, prevContent) {
-            if (html5QrScanner) {
-                html5QrScanner.clear();
-                html5QrScanner = null;
-            }
+            if (html5QrScanner) { html5QrScanner.clear(); html5QrScanner = null; }
             document.getElementById('modalContent').innerHTML = prevContent;
             lucide.createIcons();
         }
 
-        // --- EXPORT LOGIC ---
-        let currentExportMode = 'all';
-        let activeTagData = null;
-
+        // --- IMPORT / EXPORT ACTIONS ---
         async function fetchTagInfo(tagId) {
             if (!tagId) return;
             const { data, error } = await supabaseClient.from('TembacBin').select('*').eq('TAG_ID', tagId).single();
@@ -432,6 +386,9 @@
             }
         }
 
+        let currentExportMode = 'all';
+        let activeTagData = null;
+
         function setExportMode(mode) {
             currentExportMode = mode;
             document.getElementById('btnAll').className = mode === 'all' ? 'flex-1 py-2 rounded-lg bg-blue-600 text-white text-xs font-medium' : 'flex-1 py-2 rounded-lg bg-white border border-blue-300 text-xs font-medium';
@@ -439,89 +396,70 @@
             document.getElementById('out_qty_part').classList.toggle('hidden', mode === 'all');
         }
 
-        async function handleExport() {
-            const tagId = document.getElementById('out_tag').value;
-            if (!activeTagData) return alert('Vui lòng quét mã TAG ID!');
-
-            let exportQty = 0;
-            if (currentExportMode === 'all') {
-                exportQty = activeTagData.Qty;
-            } else {
-                exportQty = parseInt(document.getElementById('out_qty_part').value);
-                if (!exportQty || exportQty > activeTagData.Qty) return alert('Số lượng xuất không hợp lệ!');
-            }
-
-            const newQty = activeTagData.Qty - exportQty;
-
-            try {
-                // 1. Update Tồn kho
-                const { error: upErr } = await supabaseClient.from('TembacBin').update({ Qty: newQty }).eq('TAG_ID', tagId);
-                if (upErr) throw upErr;
-
-                // 2. Ghi Log
-                await supabaseClient.from('warehouse_logs').insert([{
-                    user_email: currentUser.email,
-                    action: 'XUẤT',
-                    item_code: activeTagData.Item_Code,
-                    tag_id: tagId,
-                    qty: exportQty
-                }]);
-
-                alert(`Xuất thành công ${exportQty} sản phẩm!`);
-                closeModal();
-                loadData();
-            } catch (e) { alert('Lỗi: ' + e.message); }
-        }
-
-        async function quickExport(tagId, itemCode) {
-            if(!tagId) return alert('Mặt hàng này không có Tag ID, vui lòng nhập thủ công!');
-            document.getElementById('out_tag').value = tagId;
-            openModal('modalOut');
-            fetchTagInfo(tagId);
-        }
-
-        // --- IMPORT LOGIC ---
-        function getPurOrderSuggestions() {
-            const orders = [...new Set(allData.map(r => r.Pur_order).filter(Boolean))];
-            return orders.map(o => `<option value="${o}">${o}</option>`).join('');
-        }
-
         async function handleImport() {
+            const btn = document.getElementById('modalSubmit');
+            const originalText = btn.innerText;
+            btn.innerText = 'Đang lưu...'; btn.disabled = true;
+
             const payload = {
                 TAG_ID: document.getElementById('in_tag').value,
                 Box: document.getElementById('in_box').value,
                 Pur_order: document.getElementById('in_pur').value,
                 Cont: document.getElementById('in_cont').value,
                 Bin: document.getElementById('in_bin').value,
-                Qty: 1 // mặc định nhập 1 hoặc thêm ô nhập qty
+                Qty: 1 // Có thể thêm ô nhập Qty nếu cần
             };
-            if (!payload.TAG_ID) return alert('Vui lòng nhập Tag ID!');
+            if (!payload.TAG_ID) { alert('Thiếu Tag ID!'); btn.innerText = originalText; btn.disabled = false; return; }
 
             try {
                 const { error } = await supabaseClient.from('TembacBin').insert([payload]);
                 if (error) throw error;
-                
-                await supabaseClient.from('warehouse_logs').insert([{
-                    user_email: currentUser.email,
-                    action: 'NHẬP',
-                    item_code: 'NEW',
-                    tag_id: payload.TAG_ID,
-                    qty: payload.Qty
-                }]);
-
+                await supabaseClient.from('warehouse_logs').insert([{ user_email: currentUser.email, action: 'NHẬP', item_code: 'NEW', tag_id: payload.TAG_ID, qty: payload.Qty }]);
                 alert('Nhập kho thành công!');
                 closeModal();
                 loadData();
             } catch (e) { alert('Lỗi: ' + e.message); }
+            finally { btn.innerText = originalText; btn.disabled = false; }
         }
 
-        // --- LOGS MODULE ---
+        async function handleExport() {
+            const btn = document.getElementById('modalSubmit');
+            const originalText = btn.innerText;
+            btn.innerText = 'Đang lưu...'; btn.disabled = true;
+
+            const tagId = document.getElementById('out_tag').value;
+            if (!activeTagData) { alert('Hãy quét mã Tag trước!'); btn.innerText = originalText; btn.disabled = false; return; }
+
+            let exportQty = 0;
+            if (currentExportMode === 'all') { exportQty = activeTagData.Qty; } 
+            else {
+                exportQty = parseInt(document.getElementById('out_qty_part').value);
+                if (!exportQty || exportQty > activeTagData.Qty) { alert('Số lượng xuất không hợp lệ!'); btn.innerText = originalText; btn.disabled = false; return; }
+            }
+
+            const newQty = activeTagData.Qty - exportQty;
+            try {
+                const { error: upErr } = await supabaseClient.from('TembacBin').update({ Qty: newQty }).eq('TAG_ID', tagId);
+                if (upErr) throw upErr;
+                await supabaseClient.from('warehouse_logs').insert([{ user_email: currentUser.email, action: 'XUẤT', item_code: activeTagData.Item_Code, tag_id: tagId, qty: exportQty }]);
+                alert(`Xuất thành công ${exportQty} sản phẩm!`);
+                closeModal();
+                loadData();
+            } catch (e) { alert('Lỗi: ' + e.message); }
+            finally { btn.innerText = originalText; btn.disabled = false; }
+        }
+
+        function getPurOrderSuggestions() {
+            const orders = [...new Set(allData.map(r => r.Pur_order).filter(Boolean))];
+            return orders.map(o => `<option value="${o}">${o}</option>`).join('');
+        }
+
         async function loadLogs() {
             const logDiv = document.getElementById('logList');
             try {
-                const { data, error } = await supabaseClient.from('warehouse_logs').select('*').order('timestamp', { ascending: false }).limit(50);
+                const { data, error } = await supabaseClient.from('warehouse_logs').select('*').order('timestamp', { ascending: false }).limit(100);
                 if (error) throw error;
-                logDiv,innerHTML = data.map(l => `
+                logDiv.innerHTML = data.map(l => `
                     <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center text-[11px]">
                         <div>
                             <span class="font-bold ${l.action === 'XUẤT' ? 'text-red-500' : 'text-emerald-500'}">${l.action}</span>
@@ -537,10 +475,9 @@
             } catch (e) { logDiv.innerHTML = 'Lỗi tải log...'; }
         }
 
-        // --- UTILS ---
         function closeModal() { 
             document.getElementById('genericModal').classList.add('hidden'); 
-            if(html5QrScanner) stopScan('dummy', '');
+            if(html5QrScanner) { html5QrScanner.clear(); html5QrScanner = null; }
         }
         function openImage(url) { document.getElementById('fullImage').src = url; document.getElementById('imageModal').classList.remove('hidden'); }
         function closeImage() { document.getElementById('imageModal').classList.add('hidden'); }
@@ -551,6 +488,12 @@
         }
         function editRow(index) { alert('Sửa item: ' + filteredData[index].Item_Code); }
         function markRow(index) { alert('Đánh dấu: ' + filteredData[index].Item_Code); }
+        async function quickExport(tagId, itemCode) {
+            if(!tagId) return alert('Không có Tag ID!');
+            openModal('modalOut');
+            document.getElementById('out_tag').value = tagId;
+            fetchTagInfo(tagId);
+        }
     </script>
 </body>
 </html>
