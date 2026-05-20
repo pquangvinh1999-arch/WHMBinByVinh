@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartInventory AI - Global WMS Standard</title>
+    <title>WMS Standard</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -138,22 +138,22 @@
 
     <header>
         <div class="logo">
-            <i class="fas fa-warehouse"></i> SmartInventory <span style="font-weight: 300; font-size: 14px; color: var(--text-dim);">| Global WMS Standard</span>
+            <i class="fas fa-warehouse"></i> SMARTInventoryStempad <span style="font-weight: 300; font-size: 14px; color: var(--text-dim);">| WMS Standard</span>
         </div>
         <div class="search-ai-container">
             <i class="fas fa-wand-magic-sparkles"></i>
             <input type="text" id="aiFilter" placeholder="AI Search (SKU, Tag, PO...)" onkeyup="debounceFilter()">
         </div>
         <div class="btn-group">
-            <button class="btn btn-export" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Export Report</button>
+            <button class="btn btn-export" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Export Excel</button>
             <button class="btn btn-rack" onclick="openModal('rackModal')"><i class="fas fa-plus"></i> Create Rack</button>
-            <button class="btn btn-bin" onclick="openModal('binModal')"><i class="fas fa-layer-group"></i> Putaway Stock</button>
+            <button class="btn btn-bin" onclick="openModal('binModal')"><i class="fas fa-layer-group"></i> Add Bin</button>
         </div>
     </header>
 
     <div id="kpiCard">
         <div style="color: var(--text-dim); font-size: 14px; margin-bottom: 5px;">Real-time Inventory Summary</div>
-        <div class="kpi-value" id="kpiSum">0 UNITS</div>
+        <div class="kpi-value" id="kpiSum">0 PCS</div>
     </div>
 
     <div class="warehouse-floor" id="warehouseFloor"></div>
@@ -172,14 +172,14 @@
             <h2><i class="fas fa-map-marker-alt"></i> Create Storage Rack</h2>
             <div class="form-grid">
                 <div class="form-group">
-                    <label>Rack Identification (ID)</label>
+                    <label>Bin Identification (ID)</label>
                     <input type="text" id="rackNameInput" placeholder="e.g. 22">
                 </div>
                 <div class="form-group">
                     <label>Storage Type</label>
                     <select id="rackTypeInput">
-                        <option value="Rack">Pallet Rack (Kệ)</option>
-                        <option value="Floor">Floor Storage (Sàn)</option>
+                        <option value="Rack">Rack (Kệ)</option>
+                        <option value="Floor">Floor (Sàn)</option>
                         <option value="Row">Linear Row (Hàng)</option>
                     </select>
                 </div>
@@ -193,7 +193,7 @@
 
     <div class="modal-overlay" id="binModal">
         <div class="modal">
-            <h2><i class="fas fa-layer-group"></i> Putaway New Stock</h2>
+            <h2><i class="fas fa-layer-group"></i> Add New Bin</h2>
             <div class="form-grid">
                 <div class="form-group">
                     <label>Target Storage Rack</label>
@@ -205,11 +205,11 @@
                     <datalist id="existingBins"></datalist>
                 </div>
                 <div class="form-group">
-                    <label>Tag ID / Serial</label>
+                    <label>Tag ID</label>
                     <input type="text" id="tagIdInput">
                 </div>
                 <div class="form-group">
-                    <label>SKU / Item Code</label>
+                    <label>Item Code</label>
                     <input type="text" id="itemCodeInput">
                 </div>
                 <div class="form-group">
@@ -221,11 +221,11 @@
                     <input type="text" id="boxInput">
                 </div>
                 <div class="form-group">
-                    <label>PO Number (Purchase Order)</label>
+                    <label>Purchase Order</label>
                     <input type="text" id="purOrderInput">
                 </div>
                 <div class="form-group">
-                    <label>Container ID</label>
+                    <label>Container</label>
                     <input type="text" id="contInput">
                 </div>
             </div>
@@ -235,13 +235,13 @@
             </div>
             <div class="btn-group" style="justify-content: flex-end; margin-top:20px;">
                 <button class="btn" style="background:#eee; color:#666" onclick="closeModal('binModal')">Cancel</button>
-                <button class="btn btn-bin" onclick="addBin()">Execute Putaway</button>
+                <button class="btn btn-bin" onclick="addBin()">Save</button>
             </div>
         </div>
     </div>
 
     <div class="copyright-footer">
-        &copy; Architected & Engineered by Vinh | Global WMS Standard Framework
+        &copy; Engineered by Vinh | WMS Standard Framework
     </div>
 
     <script>
@@ -363,25 +363,53 @@
             let imageUrl = 'https://via.placeholder.com/150x100?text=No+Image';
             if(imageFile) imageUrl = await uploadImageToCloud(imageFile);
 
-            const itemData = {
-                id: Date.now(), fullCode,
-                tagId: document.getElementById('tagIdInput').value,
-                itemCode: document.getElementById('itemCodeInput').value,
-                qty: parseInt(document.getElementById('qtyInput').value) || 0,
-                box: document.getElementById('boxInput').value,
-                purOrder: document.getElementById('purOrderInput').value,
-                cont: document.getElementById('contInput').value,
-                image: imageUrl
+            // FIX: Create a clean item object WITHOUT 'id' to let Supabase handle auto-increment
+            const itemForSupabase = {
+                Bin: fullCode,
+                TAG_ID: document.getElementById('tagIdInput').value,
+                Item_Code: document.getElementById('itemCodeInput').value,
+                Qty: parseInt(document.getElementById('qtyInput').value) || 0,
+                Box: document.getElementById('boxInput').value,
+                Pur_order: document.getElementById('purOrderInput').value,
+                Cont: document.getElementById('contInput').value,
+                image_url: imageUrl
             };
 
-            if (!warehouseData[rackId].bins[binNum]) warehouseData[rackId].bins[binNum] = { levels: {} };
-            if (!warehouseData[rackId].bins[binNum].levels[levelNum]) warehouseData[rackId].bins[binNum].levels[levelNum] = [];
-            warehouseData[rackId].bins[binNum].levels[levelNum].push(itemData);
-            usedBins.add(fullCode);
-            updateBinSuggestions();
-            await syncToSupabase(itemData);
-            renderWarehouse();
-            closeModal('binModal');
+            try {
+                // 1. Insert into Supabase and get the REAL ID back
+                const { data, error } = await supabaseClient
+                    .from('TembacBin')
+                    .insert([itemForSupabase])
+                    .select('id')
+                    .single();
+
+                if (error) throw error;
+
+                // 2. Use the REAL ID from Supabase for local state
+                const finalItem = {
+                    id: data.id,
+                    fullCode,
+                    tagId: itemForSupabase.TAG_ID,
+                    itemCode: itemForSupabase.Item_Code,
+                    qty: itemForSupabase.Qty,
+                    box: itemForSupabase.Box,
+                    purOrder: itemForSupabase.Pur_order,
+                    cont: itemForSupabase.Cont,
+                    image: imageUrl
+                };
+
+                if (!warehouseData[rackId].bins[binNum]) warehouseData[rackId].bins[binNum] = { levels: {} };
+                if (!warehouseData[rackId].bins[binNum].levels[levelNum]) warehouseData[rackId].bins[binNum].levels[levelNum] = [];
+                warehouseData[rackId].bins[binNum].levels[levelNum].push(finalItem);
+                
+                usedBins.add(fullCode);
+                updateBinSuggestions();
+                renderWarehouse();
+                closeModal('binModal');
+            } catch (err) {
+                console.error("Add Bin Error:", err);
+                alert("Database Error: " + err.message);
+            }
         }
 
         function updateBinSuggestions() {
@@ -436,23 +464,15 @@
         async function processIssuing(rackId, binNum, levelNum, itemId, type) {
             const levelItems = warehouseData[rackId].bins[binNum].levels[levelNum];
             const idx = levelItems.findIndex(i => i.id === itemId);
-            
             if(type === 'full') {
-                // Optimistic UI: Xóa ngay trên màn hình
+                // Optimistic UI
                 const itemToRemove = levelItems[idx];
                 levelItems.splice(idx, 1);
                 renderWarehouse();
                 closeActionPanel();
-
                 try {
-                    // Xóa thực tế trên Supabase
-                    if(supabaseClient) {
-                        const { error } = await supabaseClient.from('TembacBin').delete().eq('id', itemId);
-                        if(error) throw error;
-                    }
-                } catch (e) {
-                    alert("Server Error: Could not delete from database. Please refresh.");
-                }
+                    if(supabaseClient) await supabaseClient.from('TembacBin').delete().eq('id', itemId);
+                } catch (e) { alert("Server error during full issue."); }
             } else {
                 const amt = parseInt(prompt("Enter amount to issue:"));
                 if(!amt || amt > levelItems[idx].qty) return alert("Invalid amount");
@@ -496,8 +516,6 @@
                 await syncToSupabase(item);
                 renderWarehouse();
                 closeActionPanel();
-            } else {
-                alert("Upload failed. Please check Storage Policies in Supabase.");
             }
         }
 
@@ -530,7 +548,7 @@
             });
             if(query && isItemMatch) {
                 kpiCard.style.display = 'block';
-                kpiSum.innerText = `${total} UNITS`;
+                kpiSum.innerText = `${total} PCS`;
             } else {
                 kpiCard.style.display = 'none';
             }
